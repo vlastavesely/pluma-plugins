@@ -45,8 +45,10 @@ static void replace_selected_text(GtkTextBuffer *buffer, const char *text)
 	gtk_text_buffer_end_user_action(buffer);
 }
 
+#define SWITCH(a, b) {free(a); a = b;}
+
 /*
- * Convert IAST or Harvard-Kyoto to Devanagari.
+ * Convert IAST, Velthuis or Harvard-Kyoto to Devanagari.
  */
 static void convert_devanagari(GtkAction *action, PlumaWindow *window)
 {
@@ -56,12 +58,14 @@ static void convert_devanagari(GtkAction *action, PlumaWindow *window)
 	buffer = (GtkTextBuffer *) pluma_window_get_active_document(window);
 	in = buffer_selected_text(buffer);
 
+	if (encode_velthuis_to_iast(in, &out) != 0)
+		return;
+
+	SWITCH(in, out);
 	if (encode_harvard_kyoto_to_iast(in, &out) != 0)
 		return;
 
-	free(in);
-	in = out;
-
+	SWITCH(in, out);
 	if (transliterate_latin_to_devanagari(in, &out) != 0)
 		return;
 
@@ -74,7 +78,7 @@ static void convert_devanagari(GtkAction *action, PlumaWindow *window)
 }
 
 /*
- * Convert Devanagari or Harvard-Kyoto to IAST.
+ * Convert Devanagari, Velthuis or Harvard-Kyoto to IAST.
  */
 static void convert_iast(GtkAction *action, PlumaWindow *window)
 {
@@ -87,9 +91,11 @@ static void convert_iast(GtkAction *action, PlumaWindow *window)
 	if (transliterate_devanagari_to_latin(in, &out) != 0)
 		return;
 
-	free(in);
-	in = out;
+	SWITCH(in, out);
+	if (encode_velthuis_to_iast(in, &out) != 0)
+		return;
 
+	SWITCH(in, out);
 	if (encode_harvard_kyoto_to_iast(in, &out) != 0)
 		return;
 
@@ -102,11 +108,11 @@ static void convert_iast(GtkAction *action, PlumaWindow *window)
 }
 
 static const GtkActionEntry action_entries[] = {
-	{"Iast", NULL, "Devanagari conversion"},
-	{"ConvertDeva", NULL, "Convert to Devanagari", NULL,
+	{"Iast", NULL, "Devanagari Conversion"},
+	{"ConvertDeva", NULL, "Convert to Devanagari", "<control><shift>d",
 		"Convert the selected text to Devanagari",
 		G_CALLBACK(convert_devanagari)},
-	{"ConvertIast", NULL, "Convert to IAST", NULL,
+	{"ConvertIast", NULL, "Convert to IAST", "<control><shift>i",
 		"Convert the selected text to IAST",
 		G_CALLBACK(convert_iast)}
 };
@@ -115,7 +121,7 @@ static const char *menu =
 	"<ui>"
 	"  <menubar name='MenuBar'>"
 	"    <menu name='EditMenu' action='Edit'>"
-	"      <placeholder name='EditOps_5'>"
+	"      <placeholder name='EditOps_6'>"
 	"        <menu action='Iast'>"
 	"          <menuitem action='ConvertDeva'/>"
 	"          <menuitem action='ConvertIast'/>"

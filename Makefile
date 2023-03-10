@@ -7,14 +7,19 @@ PLUGINSDIR = /usr/lib/x86_64-linux-gnu/pluma/plugins/
 
 .PHONY: all clean
 
-all: iast/libiast.so
+all: iast/libiast.so length/liblength.so
 
 iast/libiast.so: iast/plugin.c
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) -liast
 
+length/liblength.so: length/plugin.c
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
+
 install:
 	install -m 0755 iast/libiast.so $(PLUGINSDIR)
 	install -m 0644 iast/iast.plugin $(PLUGINSDIR)
+	install -m 0755 length/liblength.so $(PLUGINSDIR)
+	install -m 0644 length/length.plugin $(PLUGINSDIR)
 
 uninstall:
 	rm -f $(PLUGINSDIR)/libiast.so

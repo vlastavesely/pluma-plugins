@@ -1,0 +1,5 @@
+[Plugin]
+Module=length
+IAge=2
+Name=Document Length
+Description=Show document length in the status bar.

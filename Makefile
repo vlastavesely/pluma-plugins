@@ -1,4 +1,4 @@
-CFLAGS = $(shell pkg-config --cflags pluma) -shared -fPIC # -Wno-deprecated -Wno-deprecated-declarations
+CFLAGS = $(shell pkg-config --cflags pluma) -shared -fPIC -Wno-deprecated -Wno-deprecated-declarations
 LIBS = $(shell pkg-config --libs pluma)
 
 # FIXME
@@ -10,7 +10,7 @@ PLUGINSDIR = /usr/lib/x86_64-linux-gnu/pluma/plugins/
 all: iast/libiast.so
 
 iast/libiast.so: iast/plugin.c
-	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) -liast
 
 install:
 	install -m 0755 iast/libiast.so $(PLUGINSDIR)

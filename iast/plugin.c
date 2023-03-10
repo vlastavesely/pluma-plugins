@@ -1,5 +1,7 @@
 #include <libpeas/peas-activatable.h>
 #include <pluma/pluma-window.h>
+#include <stdbool.h>
+#include <iast.h>
 #include "plugin.h"
 
 enum {
@@ -9,6 +11,8 @@ enum {
 struct PlumaIastPlugin {
 	PeasExtensionBase parent_instance;
 	PlumaWindow *window;
+	GtkActionGroup *action_group;
+	unsigned int ui_id;
 };
 
 struct PlumaIastPluginClass {
@@ -22,22 +26,170 @@ G_DEFINE_DYNAMIC_TYPE_EXTENDED(PlumaIastPlugin, pluma_iast_plugin,
 			G_IMPLEMENT_INTERFACE_DYNAMIC(PEAS_TYPE_ACTIVATABLE,
 				peas_activatable_iface_init));
 
+static char *buffer_selected_text(GtkTextBuffer *buffer)
+{
+	GtkTextIter start, end;
+
+	if (!gtk_text_buffer_get_selection_bounds(buffer, &start, &end)) {
+		return NULL;
+	}
+
+	return gtk_text_buffer_get_text(buffer, &start, &end, false);
+}
+
+static void replace_selected_text(GtkTextBuffer *buffer, const char *text)
+{
+	gtk_text_buffer_begin_user_action(buffer);
+	gtk_text_buffer_delete_selection(buffer, true, true);
+	gtk_text_buffer_insert_at_cursor(buffer, text, strlen(text));
+	gtk_text_buffer_end_user_action(buffer);
+}
+
+/*
+ * Convert IAST or Harvard-Kyoto to Devanagari.
+ */
+static void convert_devanagari(GtkAction *action, PlumaWindow *window)
+{
+	GtkTextBuffer *buffer;
+	char *in, *out;
+
+	buffer = (GtkTextBuffer *) pluma_window_get_active_document(window);
+	in = buffer_selected_text(buffer);
+
+	if (encode_harvard_kyoto_to_iast(in, &out) != 0)
+		return;
+
+	free(in);
+	in = out;
+
+	if (transliterate_latin_to_devanagari(in, &out) != 0)
+		return;
+
+	free(in);
+
+	if (out) {
+		replace_selected_text(buffer, out);
+		free(out);
+	}
+}
+
+/*
+ * Convert Devanagari or Harvard-Kyoto to IAST.
+ */
+static void convert_iast(GtkAction *action, PlumaWindow *window)
+{
+	GtkTextBuffer *buffer;
+	char *in, *out;
+
+	buffer = (GtkTextBuffer *) pluma_window_get_active_document(window);
+	in = buffer_selected_text(buffer);
+
+	if (transliterate_devanagari_to_latin(in, &out) != 0)
+		return;
+
+	free(in);
+	in = out;
+
+	if (encode_harvard_kyoto_to_iast(in, &out) != 0)
+		return;
+
+	free(in);
+
+	if (out) {
+		replace_selected_text(buffer, out);
+		free(out);
+	}
+}
+
+static const GtkActionEntry action_entries[] = {
+	{"Iast", NULL, "Devanagari conversion"},
+	{"ConvertDeva", NULL, "Convert to Devanagari", NULL,
+		"Convert the selected text to Devanagari",
+		G_CALLBACK(convert_devanagari)},
+	{"ConvertIast", NULL, "Convert to IAST", NULL,
+		"Convert the selected text to IAST",
+		G_CALLBACK(convert_iast)}
+};
+
+static const char *menu =
+	"<ui>"
+	"  <menubar name='MenuBar'>"
+	"    <menu name='EditMenu' action='Edit'>"
+	"      <placeholder name='EditOps_5'>"
+	"        <menu action='Iast'>"
+	"          <menuitem action='ConvertDeva'/>"
+	"          <menuitem action='ConvertIast'/>"
+	"        </menu>"
+	"      </placeholder>"
+	"    </menu>"
+	"  </menubar>"
+	"</ui>";
+
+static void update_ui(PlumaIastPlugin *plugin)
+{
+	PlumaWindow *window;
+	GtkTextView *view;
+	GtkAction *action;
+	bool sensitive = false;
+
+	window = plugin->window;
+	view = (GtkTextView *) pluma_window_get_active_view(window);
+
+	if (view != NULL) {
+		GtkTextBuffer *buffer;
+
+		buffer = gtk_text_view_get_buffer(view);
+		sensitive = (gtk_text_view_get_editable(view) &&
+			     gtk_text_buffer_get_has_selection(buffer));
+	}
+
+	action = gtk_action_group_get_action(plugin->action_group, "Iast");
+	gtk_action_set_sensitive(action, sensitive);
+}
+
 static void plugin_activate(PeasActivatable *activatable)
 {
 	PlumaIastPlugin *plugin;
+	PlumaWindow *window;
+	GtkUIManager *manager;
+	GError *error = NULL;
 
 	plugin = (PlumaIastPlugin *) activatable;
+	window = plugin->window;
+	manager = pluma_window_get_ui_manager(window);
 
-	puts("Initialise ...");
+	plugin->action_group = gtk_action_group_new("PlumaIastPluginActions");
+	gtk_action_group_add_actions(plugin->action_group, action_entries,
+				     G_N_ELEMENTS(action_entries), window);
+	gtk_ui_manager_insert_action_group(manager, plugin->action_group, -1);
+
+	plugin->ui_id = gtk_ui_manager_add_ui_from_string(manager, menu, -1, &error);
+	if (plugin->ui_id == 0) {
+		g_warning("%s", error->message);
+		return;
+	}
+
+	update_ui(plugin);
 }
 
 static void plugin_deactivate(PeasActivatable *activatable)
 {
 	PlumaIastPlugin *plugin;
+	GtkUIManager *manager;
 
 	plugin = (PlumaIastPlugin *) activatable;
+	manager = pluma_window_get_ui_manager(plugin->window);
 
-	puts("Finalise ...");
+	gtk_ui_manager_remove_ui(manager, plugin->ui_id);
+	gtk_ui_manager_remove_action_group(manager, plugin->action_group);
+}
+
+static void plugin_update_state(PeasActivatable *activatable)
+{
+	PlumaIastPlugin *plugin;
+
+	plugin = (PlumaIastPlugin *) activatable;
+	update_ui(plugin);
 }
 
 static void set_property(GObject *object, unsigned int prop_id,
@@ -112,6 +264,7 @@ static void peas_activatable_iface_init(PeasActivatableInterface *iface)
 {
 	iface->activate = plugin_activate;
 	iface->deactivate = plugin_deactivate;
+	iface->update_state = plugin_update_state;
 }
 
 G_MODULE_EXPORT void peas_register_types(PeasObjectModule *module)

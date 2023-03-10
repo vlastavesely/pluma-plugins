@@ -1,0 +1,5 @@
+[Plugin]
+Module=iast
+IAge=2
+Name=Devanagari and IAST conversion
+Description=Plugin for romanisation of Devanagari.

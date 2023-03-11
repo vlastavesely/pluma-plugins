@@ -1,6 +1,5 @@
 #include <libpeas/peas-activatable.h>
 #include <pluma/pluma-window.h>
-#include <pluma/pluma-statusbar.h>
 #include <stdbool.h>
 #include "plugin.h"
 

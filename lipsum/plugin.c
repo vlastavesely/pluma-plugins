@@ -36,6 +36,7 @@ static char *build_lorem_ipsum(PlumaDocument *document)
 	GError *error = NULL;
 
 	if (!g_file_get_contents(LIPSUM_FILE, &in, NULL, &error)) {
+		g_warning("%s", error->message);
 		return NULL;
 	}
 

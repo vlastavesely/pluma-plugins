@@ -1,0 +1,5 @@
+[Plugin]
+Module=lipsum
+IAge=2
+Name=Insert Lorem Ipsum
+Description=Inserts Lorem Ipsum at the cursor position.

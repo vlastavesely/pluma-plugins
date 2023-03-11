@@ -1,0 +1,5 @@
+[Plugin]
+Module=trailvisual
+IAge=2
+Name=Show Trailing Whitespaces
+Description=Highlights trailing whitespaces.

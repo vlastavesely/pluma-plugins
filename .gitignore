@@ -1,1 +1,16 @@
 *.so
+
+# Autoconf
+/Makefile
+/libkuzcrypt.pc
+/aclocal.m4
+/autoscan.log
+/configure.scan
+/configure
+/autom4te.cache
+/config.log
+/config.status
+/config.guess
+/config.sub
+/config.h*
+/install-sh

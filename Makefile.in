@@ -1,0 +1,62 @@
+CFLAGS = @PLUMA_CFLAGS@ @IAST_CFLAGS@ -shared -fPIC
+LIBS = @PLUMA_LIBS@ @IAST_LIBS@
+
+prefix       = @prefix@
+exec_prefix  = @exec_prefix@
+libdir       = @libdir@
+datarootdir  = @datarootdir@
+
+# Pluma uses deprecated functions
+CFLAGS += -Wno-deprecated -Wno-deprecated-declarations
+
+TARGET_TRIPLET = $(shell $(CC) -dumpmachine)
+PLUGINS_DIR = $(libdir)/$(TARGET_TRIPLET)/pluma/plugins/
+
+PLUGINS = iast length trailvisual lipsum
+LIBRARIES = $(foreach name,$(PLUGINS),$(name)/lib$(name).so)
+
+AUX_FILES =								\
+	Makefile configure configure.scan autom4te.cache autoscan.log	\
+	aclocal.m4 config.log config.status config.guess config.sub	\
+	config.h config.h.in config.h.in~ install-sh
+
+.PHONY: all clean
+
+all: $(LIBRARIES)
+
+iast/libiast.so: iast/plugin.c
+	$(QUIET_CC) $(CC) $^ -o $@ $(CFLAGS) $(LIBS) -liast
+
+length/liblength.so: length/plugin.c
+	$(QUIET_CC) $(CC) $^ -o $@ $(CFLAGS) $(LIBS)
+
+trailvisual/libtrailvisual.so: trailvisual/plugin.c
+	$(QUIET_CC) $(CC) $^ -o $@ $(CFLAGS) $(LIBS)
+
+lipsum/liblipsum.so: lipsum/plugin.c
+	$(QUIET_CC) $(CC) $^ -o $@ $(CFLAGS) $(LIBS)
+
+install:
+	install -m 0755 */*.so $(PLUGINS_DIR)
+	install -m 0644 */*.plugin $(PLUGINS_DIR)
+	mkdir -p $(datarootdir)/pluma/plugins/lipsum
+	install -m 0644 lipsum/lipsum.txt /usr/share/pluma/plugins/lipsum
+
+uninstall:
+	for name in $(PLUGINS); do			\
+		$(RM) $(PLUGINS_DIR)/lib$$name.so;	\
+		$(RM) $(PLUGINS_DIR)/$$name.plugin;	\
+	done
+	rm -rf $(datarootdir)/pluma/plugins/lipsum
+
+clean:
+	$(RM) -f */*.so
+
+clean-aux:
+	$(RM) -r $(AUX_FILES)
+
+distclean: clean clean-aux
+
+ifndef V
+QUIET_CC    = @echo "  CC     $@";
+endif

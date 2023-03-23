@@ -9,8 +9,7 @@ datarootdir  = @datarootdir@
 # Pluma uses deprecated functions
 CFLAGS += -Wno-deprecated -Wno-deprecated-declarations
 
-TARGET_TRIPLET = $(shell $(CC) -dumpmachine)
-PLUGINS_DIR = $(libdir)/$(TARGET_TRIPLET)/pluma/plugins/
+PLUGINS_DIR = $(libdir)/pluma/plugins/
 
 PLUGINS = iast length trailvisual lipsum
 LIBRARIES = $(foreach name,$(PLUGINS),$(name)/lib$(name).so)
@@ -37,10 +36,11 @@ lipsum/liblipsum.so: lipsum/plugin.c
 	$(QUIET_CC) $(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
 install:
+	install -m 0755 -d $(PLUGINS_DIR)
 	install -m 0755 */*.so $(PLUGINS_DIR)
 	install -m 0644 */*.plugin $(PLUGINS_DIR)
 	mkdir -p $(datarootdir)/pluma/plugins/lipsum
-	install -m 0644 lipsum/lipsum.txt /usr/share/pluma/plugins/lipsum
+	install -m 0644 lipsum/lipsum.txt $(datarootdir)/pluma/plugins/lipsum
 
 uninstall:
 	for name in $(PLUGINS); do			\

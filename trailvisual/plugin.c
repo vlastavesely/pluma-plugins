@@ -1,4 +1,5 @@
 #include <libpeas/peas-activatable.h>
+#include <pluma/pluma-window-activatable.h>
 #include <pluma/pluma-window.h>
 #include <stdbool.h>
 #include "plugin.h"
@@ -16,12 +17,12 @@ struct PlumaTrailVisualPluginClass {
 	PeasExtensionBaseClass parent_class;
 };
 
-static void peas_activatable_iface_init(PeasActivatableInterface *iface);
+static void pluma_window_activatable_iface_init(PlumaWindowActivatableInterface *iface);
 
 G_DEFINE_DYNAMIC_TYPE_EXTENDED(PlumaTrailVisualPlugin, pluma_trail_visual_plugin,
-			PEAS_TYPE_EXTENSION_BASE, 0,
-			G_IMPLEMENT_INTERFACE_DYNAMIC(PEAS_TYPE_ACTIVATABLE,
-				peas_activatable_iface_init));
+		PEAS_TYPE_EXTENSION_BASE, 0,
+		G_IMPLEMENT_INTERFACE_DYNAMIC(PLUMA_TYPE_WINDOW_ACTIVATABLE,
+			pluma_window_activatable_iface_init));
 
 static bool tag_style_is_visible(GtkTextTag *tag)
 {
@@ -186,7 +187,7 @@ static void initialise_tab(PlumaWindow *window, PlumaTab *tab,
 	initialise_document(pluma_tab_get_document(tab), plugin);
 }
 
-static void plugin_activate(PeasActivatable *activatable)
+static void plugin_activate(PlumaWindowActivatable *activatable)
 {
 	PlumaTrailVisualPlugin *plugin;
 	PlumaWindow *window;
@@ -200,7 +201,7 @@ static void plugin_activate(PeasActivatable *activatable)
 			 plugin);
 }
 
-static void plugin_deactivate(PeasActivatable *activatable)
+static void plugin_deactivate(PlumaWindowActivatable *activatable)
 {
 	PlumaTrailVisualPlugin *plugin;
 
@@ -276,7 +277,7 @@ static void pluma_trail_visual_plugin_class_finalize(PlumaTrailVisualPluginClass
 {
 }
 
-static void peas_activatable_iface_init(PeasActivatableInterface *iface)
+static void pluma_window_activatable_iface_init(PlumaWindowActivatableInterface *iface)
 {
 	iface->activate = plugin_activate;
 	iface->deactivate = plugin_deactivate;
@@ -286,6 +287,7 @@ G_MODULE_EXPORT void peas_register_types(PeasObjectModule *module)
 {
 	pluma_trail_visual_plugin_register_type(G_TYPE_MODULE(module));
 
-	peas_object_module_register_extension_type(module, PEAS_TYPE_ACTIVATABLE,
+	peas_object_module_register_extension_type(module,
+			PLUMA_TYPE_WINDOW_ACTIVATABLE,
 			pluma_trail_visual_plugin_get_type());
 }

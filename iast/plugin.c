@@ -1,4 +1,5 @@
 #include <libpeas/peas-activatable.h>
+#include <pluma/pluma-window-activatable.h>
 #include <pluma/pluma-window.h>
 #include <stdbool.h>
 #include <iast.h>
@@ -19,12 +20,12 @@ struct PlumaIastPluginClass {
 	PeasExtensionBaseClass parent_class;
 };
 
-static void peas_activatable_iface_init(PeasActivatableInterface *iface);
+static void pluma_window_activatable_iface_init(PlumaWindowActivatableInterface *iface);
 
 G_DEFINE_DYNAMIC_TYPE_EXTENDED(PlumaIastPlugin, pluma_iast_plugin,
-			PEAS_TYPE_EXTENSION_BASE, 0,
-			G_IMPLEMENT_INTERFACE_DYNAMIC(PEAS_TYPE_ACTIVATABLE,
-				peas_activatable_iface_init));
+		PEAS_TYPE_EXTENSION_BASE, 0,
+		G_IMPLEMENT_INTERFACE_DYNAMIC(PLUMA_TYPE_WINDOW_ACTIVATABLE,
+			pluma_window_activatable_iface_init));
 
 static char *buffer_selected_text(GtkTextBuffer *buffer)
 {
@@ -153,7 +154,7 @@ static void update_ui(PlumaIastPlugin *plugin)
 	gtk_action_set_sensitive(action, sensitive);
 }
 
-static void plugin_activate(PeasActivatable *activatable)
+static void plugin_activate(PlumaWindowActivatable *activatable)
 {
 	PlumaIastPlugin *plugin;
 	PlumaWindow *window;
@@ -178,7 +179,7 @@ static void plugin_activate(PeasActivatable *activatable)
 	update_ui(plugin);
 }
 
-static void plugin_deactivate(PeasActivatable *activatable)
+static void plugin_deactivate(PlumaWindowActivatable *activatable)
 {
 	PlumaIastPlugin *plugin;
 	GtkUIManager *manager;
@@ -190,7 +191,7 @@ static void plugin_deactivate(PeasActivatable *activatable)
 	gtk_ui_manager_remove_action_group(manager, plugin->action_group);
 }
 
-static void plugin_update_state(PeasActivatable *activatable)
+static void plugin_update_state(PlumaWindowActivatable *activatable)
 {
 	PlumaIastPlugin *plugin;
 
@@ -266,7 +267,7 @@ static void pluma_iast_plugin_class_finalize(PlumaIastPluginClass *class)
 {
 }
 
-static void peas_activatable_iface_init(PeasActivatableInterface *iface)
+static void pluma_window_activatable_iface_init(PlumaWindowActivatableInterface *iface)
 {
 	iface->activate = plugin_activate;
 	iface->deactivate = plugin_deactivate;
@@ -278,5 +279,6 @@ G_MODULE_EXPORT void peas_register_types(PeasObjectModule *module)
 	pluma_iast_plugin_register_type(G_TYPE_MODULE(module));
 
 	peas_object_module_register_extension_type(module,
-			PEAS_TYPE_ACTIVATABLE, pluma_iast_plugin_get_type());
+			PLUMA_TYPE_WINDOW_ACTIVATABLE,
+			pluma_iast_plugin_get_type());
 }

@@ -4,7 +4,7 @@
 #include "plugin.h"
 
 enum {
-	PROP_OBJECT = 1
+	PROP_WINDOW = 1
 };
 
 struct PlumaLengthPlugin {
@@ -147,7 +147,7 @@ static void set_property(GObject *object, unsigned int prop_id,
 	plugin = (PlumaLengthPlugin *) object;
 
 	switch (prop_id) {
-	case PROP_OBJECT:
+	case PROP_WINDOW:
 		plugin->window = g_value_dup_object(value);
 		break;
 
@@ -165,7 +165,7 @@ static void get_property(GObject *object, unsigned int prop_id, GValue *value,
 	plugin = (PlumaLengthPlugin *) object;
 
 	switch (prop_id) {
-	case PROP_OBJECT:
+	case PROP_WINDOW:
 		g_value_set_object(value, plugin->window);
 		break;
 
@@ -200,7 +200,7 @@ static void pluma_length_plugin_class_init(PlumaLengthPluginClass *class)
 	object_class->get_property = get_property;
 	object_class->dispose = plugin_dispose;
 
-	g_object_class_override_property(object_class, PROP_OBJECT, "object");
+	g_object_class_override_property(object_class, PROP_WINDOW, "window");
 }
 
 static void pluma_length_plugin_class_finalize(PlumaLengthPluginClass *class)

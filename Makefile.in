@@ -35,12 +35,29 @@ trailvisual/libtrailvisual.so: trailvisual/plugin.c
 lipsum/liblipsum.so: lipsum/plugin.c
 	$(QUIET_CC) $(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
-install:
+install: install-iast install-lipsum install-length install-trailvisual
+
+install-iast:
 	install -m 0755 -d $(PLUGINS_DIR)
-	install -m 0755 */*.so $(PLUGINS_DIR)
-	install -m 0644 */*.plugin $(PLUGINS_DIR)
-	mkdir -p $(datarootdir)/pluma/plugins/lipsum
+	install -m 0755 iast/libiast.so $(PLUGINS_DIR)
+	install -m 0644 iast/iast.plugin $(PLUGINS_DIR)
+
+install-lipsum:
+	install -m 0755 -d $(PLUGINS_DIR)
+	install -m 0755 lipsum/liblipsum.so $(PLUGINS_DIR)
+	install -m 0644 lipsum/lipsum.plugin $(PLUGINS_DIR)
+	install -m 0755 -d $(datarootdir)/pluma/plugins/lipsum
 	install -m 0644 lipsum/lipsum.txt $(datarootdir)/pluma/plugins/lipsum
+
+install-length:
+	install -m 0755 -d $(PLUGINS_DIR)
+	install -m 0644 length/length.plugin $(PLUGINS_DIR)
+	install -m 0755 length/liblength.so $(PLUGINS_DIR)
+
+install-trailvisual:
+	install -m 0755 -d $(PLUGINS_DIR)
+	install -m 0644 trailvisual/trailvisual.plugin $(PLUGINS_DIR)
+	install -m 0755 trailvisual/libtrailvisual.so $(PLUGINS_DIR)
 
 uninstall:
 	for name in $(PLUGINS); do			\
